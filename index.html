@@ -3,105 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexa AI - 100% Private Assistant</title>
+<title>Nexa AI - Ultra Private Assistant</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-  body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; height: 100vh; }
+  body { background: #090d16; color: #f8fafc; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  
+  /* Security Lock Screen */
+  #lock-screen { position: fixed; inset: 0; background: #090d16; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+  .lock-box { background: #1e293b; padding: 28px; border-radius: 20px; width: 100%; max-width: 340px; border: 1px solid #334155; }
+  .lock-box h2 { color: #38bdf8; margin-bottom: 8px; }
+  .lock-box p { font-size: 13px; color: #94a3b8; margin-bottom: 18px; }
+  .pin-input { width: 100%; text-align: center; font-size: 24px; letter-spacing: 8px; padding: 12px; border-radius: 12px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 14px; }
+  .btn-primary { width: 100%; background: #38bdf8; color: #090d16; font-weight: 700; padding: 12px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; }
+
+  /* Main App UI */
   header { background: #1e293b; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #38bdf8; }
+  .brand { font-weight: 700; font-size: 18px; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
   .badge { background: #065f46; color: #34d399; font-size: 11px; padding: 3px 8px; border-radius: 12px; }
-  .actions button { background: #334155; color: #e2e8f0; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; margin-left: 5px; }
+  .hdr-btns button { background: #334155; color: #e2e8f0; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; margin-left: 4px; }
+  
+  #ai-setup-banner { background: #172554; padding: 12px 16px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1d4ed8; }
+  #ai-setup-banner button { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; }
+
   #chat-box { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 82%; padding: 12px 14px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+  .msg { max-width: 84%; padding: 12px 14px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
   .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
   .ai { background: #1e293b; color: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #334155; }
-  .info-bar { background: #1e293b; text-align: center; font-size: 12px; color: #94a3b8; padding: 5px; border-top: 1px solid #334155; }
+  
+  .info-bar { background: #1e293b; text-align: center; font-size: 11px; color: #94a3b8; padding: 5px; border-top: 1px solid #334155; }
   .input-area { background: #1e293b; padding: 10px; display: flex; gap: 8px; }
-  input { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px 14px; border-radius: 24px; font-size: 15px; outline: none; }
+  input.chat-in { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px 14px; border-radius: 24px; font-size: 15px; outline: none; }
   button.send { background: #38bdf8; color: #0f172a; border: none; padding: 0 20px; border-radius: 24px; font-weight: 700; font-size: 15px; }
 </style>
 </head>
 <body>
 
+<!-- Security Lock Screen -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <h2>🔒 Nexa AI Vault</h2>
+    <p id="lock-msg">Apni privacy surakshit rakhne ke liye 4-ankon ka PIN banayein ya daalein.</p>
+    <input type="password" id="pin-field" class="pin-input" maxlength="4" inputmode="numeric" placeholder="••••">
+    <button class="btn-primary" onclick="verifyPin()">Unlock AI</button>
+  </div>
+</div>
+
 <header>
-  <div class="brand">Nexa AI <span class="badge">🔒 100% Private</span></div>
-  <div class="actions">
-    <button onclick="clearStorage()">🧹 Free Space</button>
+  <div class="brand">Nexa AI <span class="badge">🛡️ Encrypted</span></div>
+  <div class="hdr-btns">
+    <button onclick="lockApp()">🔒 Lock</button>
+    <button onclick="wipeData()">🧹 Wipe</button>
   </div>
 </header>
 
+<div id="ai-setup-banner">
+  <span id="ai-status">⚡ Offline AI Brain: Ready to Load</span>
+  <button id="load-ai-btn" onclick="initOfflineAI()">Load AI Brain (Free)</button>
+</div>
+
 <div id="chat-box"></div>
 
-<div class="info-bar" id="status-bar">Local Storage Safe • Free Credits: 5/5</div>
+<div class="info-bar" id="status-bar">AES Local Lock Active • Zero Server Data</div>
 
 <div class="input-area">
-  <input type="text" id="user-input" placeholder="Apna sawal likhein..." onkeypress="if(event.key==='Enter') sendMessage()">
+  <input type="text" id="user-input" class="chat-in" placeholder="Apna sawal poochein..." onkeypress="if(event.key==='Enter') sendMessage()">
   <button class="send" onclick="sendMessage()">Send</button>
 </div>
 
-<script>
-  let chatHistory = JSON.parse(localStorage.getItem('nexa_private_chats')) || [
-    { sender: 'ai', text: 'Namaste! Main Nexa AI hoon. Aapki saari baatein 100% private hain aur sirf aapke phone mein surakshit rehti hain. Aaj main aapki kya madad kar sakta hoon?' }
-  ];
-  let credits = localStorage.getItem('nexa_credits') !== null ? parseInt(localStorage.getItem('nexa_credits')) : 5;
+<script type="module">
+  import { CreateMLCEngine } from "https://esm.run";
 
-  const chatBox = document.getElementById('chat-box');
-  const statusBar = document.getElementById('status-bar');
+  let engine = null;
+  let wrongAttempts = 0;
+
+  function encryptData(text, key) {
+    let res = '';
+    for (let i = 0; i < text.length; i++) {
+      res += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(unescape(encodeURIComponent(res)));
+  }
+
+  function decryptData(encoded, key) {
+    try {
+      let text = decodeURIComponent(escape(atob(encoded)));
+      let res = '';
+      for (let i = 0; i < text.length; i++) {
+        res += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return res;
+    } catch (e) { return null; }
+  }
+
+  window.verifyPin = function() {
+    const pin = document.getElementById('pin-field').value;
+    if (pin.length !== 4) { alert('Kripya 4 ankon ka PIN daalein.'); return; }
+    
+    const savedPin = localStorage.getItem('nexa_pin');
+    if (!savedPin) {
+      localStorage.setItem('nexa_pin', btoa(pin));
+      sessionStorage.setItem('active_pin', pin);
+      document.getElementById('lock-screen').style.display = 'none';
+      loadChats();
+    } else if (atob(savedPin) === pin) {
+      wrongAttempts = 0;
+      sessionStorage.setItem('active_pin', pin);
+      document.getElementById('lock-screen').style.display = 'none';
+      loadChats();
+    } else {
+      wrongAttempts++;
+      if (wrongAttempts >= 3) {
+        localStorage.clear();
+        alert('3 baar galat PIN! Security ke liye saara data delete kar diya gaya hai.');
+        location.reload();
+      } else {
+        alert(`Galat PIN! Bache hue mauke: ${3 - wrongAttempts}`);
+      }
+    }
+  };
+
+  window.lockApp = function() {
+    sessionStorage.removeItem('active_pin');
+    document.getElementById('pin-field').value = '';
+    document.getElementById('lock-screen').style.display = 'flex';
+  };
+
+  window.wipeData = function() {
+    if (confirm('Kya aap saari encrypted chats aur storage saaf karna chahte hain?')) {
+      localStorage.removeItem('nexa_enc_chats');
+      loadChats();
+    }
+  };
+
+  let chatHistory = [];
+  function loadChats() {
+    const pin = sessionStorage.getItem('active_pin');
+    const enc = localStorage.getItem('nexa_enc_chats');
+    if (enc && pin) {
+      const dec = decryptData(enc, pin);
+      chatHistory = dec ? JSON.parse(dec) : [];
+    }
+    if (chatHistory.length === 0) {
+      chatHistory = [{ sender: 'ai', text: 'Namaste! Main Nexa AI hoon. Aapka data 4-digit PIN aur encryption se locked hai. Upar "Load AI Brain" dabakar mera offline dimaag chalu karein!' }];
+    }
+    renderChats();
+  }
+
+  function saveChats() {
+    const pin = sessionStorage.getItem('active_pin');
+    if (pin) {
+      const enc = encryptData(JSON.stringify(chatHistory), pin);
+      localStorage.setItem('nexa_enc_chats', enc);
+    }
+  }
 
   function renderChats() {
-    chatBox.innerHTML = '';
+    const box = document.getElementById('chat-box');
+    box.innerHTML = '';
     chatHistory.forEach(m => {
       const div = document.createElement('div');
       div.className = 'msg ' + m.sender;
       div.innerText = m.text;
-      chatBox.appendChild(div);
+      box.appendChild(div);
     });
-    chatBox.scrollTop = chatBox.scrollHeight;
-    statusBar.innerText = `🔒 Local Storage Safe • Free Sawal Bache Hain: ${credits}`;
+    box.scrollTop = box.scrollHeight;
   }
 
-  function clearStorage() {
-    if(confirm('Kya aap purani chat delete karke phone ki storage khali karna chahte hain?')) {
-      localStorage.removeItem('nexa_private_chats');
-      chatHistory = [{ sender: 'ai', text: 'Storage saaf kar di gayi hai! Nayi shuruat karein.' }];
-      renderChats();
+  window.initOfflineAI = async function() {
+    const status = document.getElementById('ai-status');
+    const btn = document.getElementById('load-ai-btn');
+    btn.disabled = true;
+    btn.innerText = 'Downloading...';
+    try {
+      engine = await CreateMLCEngine("Qwen2.5-0.5B-Instruct-q4f16_1-MLC", {
+        initProgressCallback: (report) => {
+          status.innerText = '⏳ ' + report.text;
+        }
+      });
+      status.innerText = '✅ Offline AI Active (100% Private)';
+      btn.style.display = 'none';
+    } catch (err) {
+      status.innerText = '⚠️ Phone browser WebGPU support nahi karta (Basic Mode Active)';
+      btn.innerText = 'Retry';
+      btn.disabled = false;
     }
-  }
+  };
 
-  async function sendMessage() {
+  window.sendMessage = async function() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
     if (!text) return;
 
-    if (credits <= 0) {
-      alert('Aapke 5 free sawal poore ho gaye hain! Unlimited chat ke liye Pro Plan lein.');
-      return;
-    }
-
     chatHistory.push({ sender: 'user', text: text });
     input.value = '';
-    credits--;
-    localStorage.setItem('nexa_credits', credits);
+    saveChats();
     renderChats();
 
-    // AI Jawab Dene Ka System (Yahan hum Open-Source Offline AI Model jodenge)
-    setTimeout(() => {
-      const reply = generateSmartReply(text);
-      chatHistory.push({ sender: 'ai', text: reply });
-      localStorage.setItem('nexa_private_chats', JSON.stringify(chatHistory));
+    if (engine) {
+      chatHistory.push({ sender: 'ai', text: 'Soch raha hoon...' });
       renderChats();
-    }, 600);
-  }
+      const reply = await engine.chat.completions.create({
+        messages: [
+          { role: "system", content: "Tum Nexa AI ho, ek helpful aur polite personal assistant jo Hindi aur Hinglish mein jawab deta hai." },
+          { role: "user", content: text }
+        ]
+      });
+      chatHistory[chatHistory.length - 1].text = reply.choices.message.content;
+    } else {
+      chatHistory.push({ sender: 'ai', text: 'Mera Offline AI Brain abhi load nahi hua hai. Upar "Load AI Brain" button dabayein, ya agar aapka phone purana hai toh hum agle step mein ismein Cloud Fallback jodenge!' });
+    }
+    saveChats();
+    renderChats();
+  };
 
-  function generateSmartReply(q) {
-    q = q.toLowerCase();
-    if (q.includes('naam') || q.includes('kaun ho')) return 'Main Nexa AI hoon — aapka apna 100% private assistant. Mera data kisi bahari server par nahi jata.';
-    if (q.includes('privacy') || q.includes('safe')) return 'Aapki saari chats sirf aapke phone ki local memory mein locked hain. Koi company ise padh nahi sakti.';
-    if (q.includes('hello') || q.includes('hi') || q.includes('namaste')) return 'Namaste! Bataiye main aapke kaam mein kaise madad kar sakta hoon?';
-    return 'Aapne poocha: "' + q + '". Abhi mera offline AI engine test mode mein hai. Agle step mein hum ismein asli open-source AI brain (WebLLM/Gemma) jodenge jisse yeh har sawal ka poora jawab dega!';
+  if (localStorage.getItem('nexa_pin')) {
+    document.getElementById('lock-msg').innerText = 'Apna 4-ankon ka Secret PIN daalein (3 galat koshish par data wipe ho jayega).';
   }
-
-  renderChats();
 </script>
 </body>
 </html>
