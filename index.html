@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexa AI - 100% Private Assistant</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; height: 100vh; }
+  header { background: #1e293b; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #38bdf8; }
+  .badge { background: #065f46; color: #34d399; font-size: 11px; padding: 3px 8px; border-radius: 12px; }
+  .actions button { background: #334155; color: #e2e8f0; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; margin-left: 5px; }
+  #chat-box { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 82%; padding: 12px 14px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+  .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .ai { background: #1e293b; color: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #334155; }
+  .info-bar { background: #1e293b; text-align: center; font-size: 12px; color: #94a3b8; padding: 5px; border-top: 1px solid #334155; }
+  .input-area { background: #1e293b; padding: 10px; display: flex; gap: 8px; }
+  input { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px 14px; border-radius: 24px; font-size: 15px; outline: none; }
+  button.send { background: #38bdf8; color: #0f172a; border: none; padding: 0 20px; border-radius: 24px; font-weight: 700; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Nexa AI <span class="badge">🔒 100% Private</span></div>
+  <div class="actions">
+    <button onclick="clearStorage()">🧹 Free Space</button>
+  </div>
+</header>
+
+<div id="chat-box"></div>
+
+<div class="info-bar" id="status-bar">Local Storage Safe • Free Credits: 5/5</div>
+
+<div class="input-area">
+  <input type="text" id="user-input" placeholder="Apna sawal likhein..." onkeypress="if(event.key==='Enter') sendMessage()">
+  <button class="send" onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+  let chatHistory = JSON.parse(localStorage.getItem('nexa_private_chats')) || [
+    { sender: 'ai', text: 'Namaste! Main Nexa AI hoon. Aapki saari baatein 100% private hain aur sirf aapke phone mein surakshit rehti hain. Aaj main aapki kya madad kar sakta hoon?' }
+  ];
+  let credits = localStorage.getItem('nexa_credits') !== null ? parseInt(localStorage.getItem('nexa_credits')) : 5;
+
+  const chatBox = document.getElementById('chat-box');
+  const statusBar = document.getElementById('status-bar');
+
+  function renderChats() {
+    chatBox.innerHTML = '';
+    chatHistory.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'msg ' + m.sender;
+      div.innerText = m.text;
+      chatBox.appendChild(div);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+    statusBar.innerText = `🔒 Local Storage Safe • Free Sawal Bache Hain: ${credits}`;
+  }
+
+  function clearStorage() {
+    if(confirm('Kya aap purani chat delete karke phone ki storage khali karna chahte hain?')) {
+      localStorage.removeItem('nexa_private_chats');
+      chatHistory = [{ sender: 'ai', text: 'Storage saaf kar di gayi hai! Nayi shuruat karein.' }];
+      renderChats();
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (credits <= 0) {
+      alert('Aapke 5 free sawal poore ho gaye hain! Unlimited chat ke liye Pro Plan lein.');
+      return;
+    }
+
+    chatHistory.push({ sender: 'user', text: text });
+    input.value = '';
+    credits--;
+    localStorage.setItem('nexa_credits', credits);
+    renderChats();
+
+    // AI Jawab Dene Ka System (Yahan hum Open-Source Offline AI Model jodenge)
+    setTimeout(() => {
+      const reply = generateSmartReply(text);
+      chatHistory.push({ sender: 'ai', text: reply });
+      localStorage.setItem('nexa_private_chats', JSON.stringify(chatHistory));
+      renderChats();
+    }, 600);
+  }
+
+  function generateSmartReply(q) {
+    q = q.toLowerCase();
+    if (q.includes('naam') || q.includes('kaun ho')) return 'Main Nexa AI hoon — aapka apna 100% private assistant. Mera data kisi bahari server par nahi jata.';
+    if (q.includes('privacy') || q.includes('safe')) return 'Aapki saari chats sirf aapke phone ki local memory mein locked hain. Koi company ise padh nahi sakti.';
+    if (q.includes('hello') || q.includes('hi') || q.includes('namaste')) return 'Namaste! Bataiye main aapke kaam mein kaise madad kar sakta hoon?';
+    return 'Aapne poocha: "' + q + '". Abhi mera offline AI engine test mode mein hai. Agle step mein hum ismein asli open-source AI brain (WebLLM/Gemma) jodenge jisse yeh har sawal ka poora jawab dega!';
+  }
+
+  renderChats();
+</script>
+</body>
+</html>
